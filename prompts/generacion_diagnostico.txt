@@ -23,19 +23,17 @@ Enriquece la respuesta citando algunos ejemplos donde el comportamiento se cumpl
 2. *Evaluación de la sesión*
    Aplica los siguientes 10 criterios. Para cada uno, asigna un puntaje de 0 a 10 y explica brevemente por qué se otorga dicha puntuación:
 
-   - *C1. Enfoques pedagógicos*: ¿El tutor menciona o aplica enfoques pedagógicos actualizados durante la llamada?
-   - *C2. Aplicabilidad al aula*: ¿El tutor explica conceptos pedagógicos de forma que resulten aplicables al aula para los docentes acompañados?
-   - *C3. Claridad y profesionalismo*: ¿El tutor utiliza un lenguaje claro, profesional y comprensible en la conversación?
-   - *C4. Retroalimentación pedagógica*: ¿El tutor brinda retroalimentación específica, oportuna y constructiva sobre prácticas docentes durante la llamada?
-   - *C5. Estructura y objetivos*: ¿El tutor estructura la sesión con objetivos claros y guía el desarrollo de la misma de manera organizada?
-   - *C6. Atención a necesidades*: ¿El tutor adapta sus intervenciones a las necesidades, preguntas o dificultades expresadas por los docentes?
-   - *C7. Dominio digital*: ¿El tutor demuestra dominio del entorno digital o hace referencia al uso adecuado de herramientas virtuales durante la llamada?
-   - *C8. Recursos digitales*: ¿El tutor recomienda o utiliza recursos digitales pertinentes en la conversación (videos, plataformas, materiales interactivos)?
-   - *C9. Seguimiento formativo*: ¿El tutor menciona evidencias del proceso formativo o hace seguimiento a acciones previamente acordadas?
-   - *C10. Ajustes y nuevas estrategias*: ¿El tutor realiza ajustes o plantea nuevas estrategias con base en lo conversado y evaluado durante la llamada? Agregar una fila con el resultado total, corresponde al promedio de los criterios de evaluación. Califica cada criterio de 1 a 5. Siendo 0 y 1 bajo; 2 y 3 medio, 4 y 5 alto. 
+   - *C1. Estructura y objetivos de la sesión*: ¿El tutor abre la sesión con los docentes identificando objetivos y alcance del espacio?
+   - *C2. Seguimiento formativo*: ¿El tutor menciona evidencias del proceso formativo y hace seguimiento a acciones previamente acordadas?
+   - *C3. Enfoques pedagógicos*: ¿El tutor menciona o aplica enfoques pedagógicos actualizados durante la sesión?
+   - *C4. Claridad y profesionalismo*: ¿El tutor utiliza un lenguaje claro, profesional y comprensible?
+   - *C5. Guion didáctico*: ¿El tutor desarrolla la sesión a partir de la estructura del guion didáctico
+   - *C6. Retroalimentación pedagógica*: ¿El tutor brinda retroalimentación específica y constructiva sobre prácticas docentes durante la sesión?
+   - *C7. Dominio digital*: ¿El tutor demuestra dominio del entorno digital o hace referencia al uso adecuado de la plataforma?
+   - *C8. Cierre*: ¿El tutor plantea estrategias con base en lo conversado y evaluado durante la sesión? 
 
 3. *Síntesis evaluativa*
-   - Calcula el *promedio general* de la sesión con base en los 10 criterios.
+   - Calcula el *promedio general* de la sesión con base en los 8 criterios.
    - Redacta una conclusión general sobre la calidad de la tutoría.
 
 4. *Informe estructurado*

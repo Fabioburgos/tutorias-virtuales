@@ -3,47 +3,47 @@ import re
 
 def extraer_calificaciones(informe_texto: str) -> tuple[dict, float]:
     """
-    Extrae las calificaciones de un informe de texto generado por Gemini
-    y calcula el promedio. El formato esperado es:
-    **P1. ...**
-    **Cumple/No Cumple. (X/5)**
+    Extrae las calificaciones de un informe en formato de tabla Markdown
+    generado por Gemini y calcula el promedio.
 
     Args:
         informe_texto: El texto completo generado por Gemini.
 
     Returns:
         Una tupla conteniendo:
-        - Un diccionario con las calificaciones por criterio (ej. {'P1': 0, 'P2': 3}).
+        - Un diccionario con las calificaciones por criterio (ej. {'C1': 9, 'C2': 10}).
         - El promedio general de las calificaciones.
     """
-    print("--- [Parser] Extrayendo calificaciones del informe (formato P/Cumple) ---")
+    print("--- [Parser] Extrayendo calificaciones de la tabla Markdown ---")
 
-    # Expresión regular actualizada para el nuevo formato.
-    # - `^\*\*P(\d+)\.` : Busca una línea que empiece con **P seguido de un número (captura el número).
-    # - `.*?`: Coincide con cualquier caracter (incluyendo saltos de línea) de forma no codiciosa.
-    # - `\((\d+)/5\)`: Busca el patrón literal (X/5) y captura la puntuación X.
-    # - `re.DOTALL` permite que `.` coincida con saltos de línea, `re.MULTILINE` ayuda con `^`.
-    patron = re.compile(r"^\*\*Puntaje(\d+)\..*?\((\d+)/10\)", re.MULTILINE | re.DOTALL)
+    # Expresión regular mejorada para ser más flexible.
+    # Busca: | **C<numero>...** | <puntaje> |
+    # Captura el número del criterio y el número del puntaje en la siguiente celda.
+    patron = re.compile(r"\|\s*\*\*C(\d+)\..*?\|\s*(\d+)\s*\|", re.DOTALL)
 
     calificaciones = {}
     puntuaciones = []
 
-    # Usamos finditer para encontrar todas las coincidencias en el texto
     for match in patron.finditer(informe_texto):
-        pregunta_num = int(match.group(1))
+        criterio_num = int(match.group(1))
+        # El grupo 2 ahora captura directamente el número de la puntuación.
         puntuacion = int(match.group(2))
-
-        # Guardamos la calificación usando la "P" para consistencia
-        calificaciones[f"P{pregunta_num}"] = puntuacion
+        
+        calificaciones[f"C{criterio_num}"] = puntuacion
         puntuaciones.append(puntuacion)
 
-    if not puntuaciones:
-        print("ADVERTENCIA: No se encontraron calificaciones con el formato esperado en el texto.")
-        print("Asegúrate de que la respuesta de Gemini incluya la puntuación como '(X/5)'.")
+    # También buscamos el promedio final que Gemini calcula
+    promedio_match = re.search(r"\|\s*\*\*PROMEDIO.*?\*\*\|\s*([\d\.]+)", informe_texto)
+    if promedio_match:
+        promedio = float(promedio_match.group(1))
+        print(f"Promedio extraído directamente de la respuesta de Gemini: {promedio:.2f}")
+    elif puntuaciones:
+        promedio = sum(puntuaciones) / len(puntuaciones)
+        print(f"Promedio calculado a partir de las calificaciones encontradas: {promedio:.2f}")
+    else:
+        print("ADVERTENCIA: No se encontraron calificaciones ni un promedio en el texto.")
         return {}, 0.0
 
-    promedio = sum(puntuaciones) / len(puntuaciones)
     print(f"Calificaciones extraídas: {calificaciones}")
-    print(f"Promedio calculado: {promedio:.2f}")
-
+    
     return calificaciones, promedio
