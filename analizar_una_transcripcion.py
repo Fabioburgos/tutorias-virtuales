@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # --- 1. CONFIGURACIÓN ---
     # Aquí defines la transcripción específica que quieres analizar
     GCS_BUCKET_NAME = "ia_tele_educacion"
-    RUTA_TRANSCRIPCION_EN_GCS = "tutorias_virtuales/google_docs/Tutoría lenguaje Nathaly - 2025_05_22 13_53 CST - Transcript.docx"
+    RUTA_TRANSCRIPCION_EN_GCS = "tutorias_virtuales/google_docs/Tutoría Matemáticas Jaime - 2025_05_20 15_13 CST - Transcript.docx"
     
     # Ruta al archivo que contiene el prompt de evaluación
     ruta_prompt = "prompts/generacion_diagnostico.txt"

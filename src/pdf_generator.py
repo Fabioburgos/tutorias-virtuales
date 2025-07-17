@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          # src/pdf_generator.py
+# src/pdf_generator.py
 import os
 import re
 from fpdf import FPDF
@@ -53,90 +53,89 @@ def crear_informe_pdf(titulo: str, informe_texto: str, calificaciones: dict, pro
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # --- INICIO DE LA CORRECCIÓN ---
-    # Función auxiliar para sanitizar todo el texto antes de enviarlo a FPDF
     def sanitize(text):
-        return text.encode('latin-1', 'replace').decode('latin-1')
-    # --- FIN DE LA CORRECCIÓN ---
+        """Reemplaza caracteres no soportados para prevenir errores de codificación."""
+        return text.replace('•', '-').replace('●', '-').encode('latin-1', 'replace').decode('latin-1')
 
-    # --- Parsear y escribir el informe línea por línea ---
-    in_evaluation_table = False
-    for line in informe_texto.split('\n'):
-        # Detectar el inicio de la sección de evaluación
-        if "Evaluación de la Sesión" in line:
-            in_evaluation_table = True
+    # --- Parsear y escribir el informe por secciones ---
+    # Usamos regex para encontrar el contenido de cada sección principal
+    seccion_identificacion_match = re.search(r'### \*\*1\. Identificación Básica\*\*(.*?)(?=### \*\*2\. Evaluación de la Sesión\*\*)', informe_texto, re.DOTALL)
+    seccion_evaluacion_match = re.search(r'### \*\*2\. Evaluación de la Sesión\*\*(.*?)(?=### \*\*3\. Síntesis evaluativa\*\*)', informe_texto, re.DOTALL)
+    seccion_sintesis_match = re.search(r'### \*\*3\. Síntesis evaluativa\*\*(.*?)(?=### \*\*4\. Recomendaciones de Mejora\*\*)', informe_texto, re.DOTALL)
+    seccion_recomendaciones_match = re.search(r'### \*\*4\. Recomendaciones de Mejora\*\*(.*)', informe_texto, re.DOTALL)
+
+    def render_seccion_texto(titulo_seccion, contenido_match):
+        """Función auxiliar para renderizar secciones de texto genéricas."""
+        if not contenido_match: return
         
-        # Ignorar las líneas de formato de la tabla Markdown
-        if re.match(r'\| :--- \|', line) or re.match(r'\|\s*\*\*PROMEDIO', line):
-            continue
+        pdf.set_font('Arial', 'B', 14)
+        pdf.set_text_color(*COLOR_AZUL_OSCURO)
+        pdf.multi_cell(0, 8, sanitize(titulo_seccion))
+        pdf.ln(2)
 
-        # Lógica para renderizar la tabla de evaluación
-        if in_evaluation_table and line.startswith('| **C'):
-            partes = [p.strip() for p in line.split('|')]
-            if len(partes) > 3: # Asegurarse de que la fila tiene contenido
-                criterio_titulo = partes[1].replace('**', '').strip()
-                puntaje = partes[2].strip()
-                justificacion = partes[3].strip()
-                cita_transcripcion = partes[4].strip() if len(partes) > 4 else "N/A"
-                cita_fuente = partes[5].strip() if len(partes) > 5 else "N/A"
+        for line in contenido_match.group(1).strip().split('\n'):
+            line_safe = sanitize(line.strip())
+            if not line_safe: continue
+            
+            # --- INICIO DE LA CORRECCIÓN ---
+            # Se simplifica la lógica para manejar viñetas de forma más robusta.
+            if line_safe.startswith('* '):
+                pdf.set_font('Arial', '', 11)
+                pdf.set_text_color(0)
+                # Se combina la viñeta y el texto en una sola llamada a multi_cell
+                # Se añaden espacios para simular la indentación.
+                texto_con_vineta = "    - " + line_safe.lstrip('* ').strip()
+                pdf.multi_cell(0, 5, texto_con_vineta)
+            # --- FIN DE LA CORRECCIÓN ---
+            elif line_safe.startswith('**'):
+                pdf.set_font('Arial', 'B', 11)
+                pdf.set_text_color(0)
+                pdf.multi_cell(0, 6, line_safe.replace('**', ''))
+            else:
+                pdf.set_font('Arial', '', 11)
+                pdf.set_text_color(0)
+                pdf.multi_cell(0, 6, line_safe)
+        pdf.ln(5)
 
+    # Renderizar las secciones de texto
+    render_seccion_texto("1. Identificación Básica", seccion_identificacion_match)
+    
+    # Renderizar la sección de Evaluación de forma especial
+    if seccion_evaluacion_match:
+        pdf.set_font('Arial', 'B', 14)
+        pdf.set_text_color(*COLOR_AZUL_OSCURO)
+        pdf.cell(0, 10, "2. Evaluación de la Sesión", 0, 1, 'L')
+        pdf.ln(2)
+        
+        # Iterar sobre cada línea de la sección de evaluación
+        for line in seccion_evaluacion_match.group(1).strip().split('\n'):
+            if not line.strip().startswith('| **C'): continue
+            
+            partes = [p.strip() for p in line.strip('|').split('|')]
+            if len(partes) >= 3:
+                criterio_titulo = partes[0].replace('**', '').strip()
+                puntaje = partes[1].strip()
+                justificacion = partes[2].strip()
+                
                 pdf.set_font('Arial', 'B', 11)
                 pdf.set_text_color(0)
                 pdf.multi_cell(0, 6, sanitize(criterio_titulo))
                 
-                pdf.set_font('Arial', 'B', 10)
-                pdf.set_text_color(*COLOR_VERDE)
-                pdf.multi_cell(0, 6, sanitize(f"Puntaje: {puntaje}"))
-                
                 pdf.set_font('Arial', '', 10)
-                pdf.set_text_color(0)
+                pdf.multi_cell(0, 5, sanitize(f"Puntaje Otorgado: {puntaje}"))
                 pdf.multi_cell(0, 5, sanitize(f"Justificación: {justificacion}"))
+                pdf.ln(4)
 
-                pdf.set_font('Arial', 'I', 9)
-                pdf.set_text_color(120)
-                if cita_transcripcion and cita_transcripcion != "N/A":
-                    pdf.multi_cell(0, 5, sanitize(f"Cita de la Transcripción: {cita_transcripcion}"))
-                if cita_fuente and cita_fuente != "N/A":
-                     pdf.multi_cell(0, 5, sanitize(f"Cita de la Fuente de Datos: {cita_fuente}"))
-                pdf.ln(5)
-            continue # Pasar a la siguiente línea después de procesar la fila de la tabla
+    render_seccion_texto("3. Síntesis Evaluativa", seccion_sintesis_match)
+    render_seccion_texto("4. Recomendaciones de Mejora", seccion_recomendaciones_match)
 
-        # Lógica para renderizar otros tipos de líneas
-        # Aplicamos la sanitización a cada línea antes de renderizarla
-        line_safe = sanitize(line)
-
-        if line.startswith('### **'): # Encabezado principal
-            pdf.set_font('Arial', 'B', 14)
-            pdf.set_text_color(*COLOR_AZUL_OSCURO)
-            pdf.multi_cell(0, 8, line_safe.replace('### **', '').replace('**', '').strip())
-            pdf.ln(4)
-        elif line.startswith('**'): # Texto en negrita
-            pdf.set_font('Arial', 'B', 11)
-            pdf.set_text_color(0)
-            pdf.multi_cell(0, 6, line_safe.replace('**', '').strip())
-            pdf.ln(1)
-        elif line.startswith('* '): # Bullet points
-            pdf.set_font('Arial', '', 11)
-            pdf.set_text_color(0)
-            pdf.cell(5, 5, ' -', 0, 0)
-            pdf.multi_cell(0, 5, line_safe[2:].strip())
-            pdf.ln(1)
-        else: # Párrafos normales
-            pdf.set_font('Arial', '', 11)
-            pdf.set_text_color(0)
-            if line_safe.strip(): # Solo escribir si la línea no está vacía
-                pdf.multi_cell(0, 6, line_safe.strip())
-                pdf.ln(1)
-
-    # --- Añadir la tabla de resumen al final ---
+    # --- Añadir la tabla de resumen cuantitativo al final ---
     pdf.add_page()
-    
     pdf.set_font('Arial', 'B', 14)
     pdf.set_text_color(*COLOR_AZUL_OSCURO)
     pdf.cell(0, 10, "Resumen Cuantitativo de Calificaciones", 0, 1, 'L')
     pdf.ln(5)
     
-    # Encabezados de la tabla
     pdf.set_font('Arial', 'B', 11)
     pdf.set_fill_color(*COLOR_GRIS_OSCURO)
     pdf.set_text_color(255)
@@ -147,7 +146,6 @@ def crear_informe_pdf(titulo: str, informe_texto: str, calificaciones: dict, pro
     pdf.set_font('Arial', '', 10)
     pdf.set_text_color(0)
     
-    # Contenido de la tabla
     if calificaciones:
         for criterio, nota in sorted(calificaciones.items()):
             if nota <= 4: nivel, color = "Bajo", COLOR_ROJO
@@ -160,14 +158,11 @@ def crear_informe_pdf(titulo: str, informe_texto: str, calificaciones: dict, pro
             pdf.set_text_color(0)
             pdf.cell(120, 10, nivel, 1, 1, 'C')
 
-    # Promedio General
     pdf.ln(10)
     pdf.set_font('Arial', 'B', 12)
     pdf.set_text_color(*COLOR_AZUL_OSCURO)
     pdf.cell(0, 10, f"Promedio General Final: {promedio:.2f} / 10.00", 0, 1, 'L')
 
-    # Guardar el archivo PDF
     os.makedirs(os.path.dirname(ruta_salida), exist_ok=True)
     pdf.output(ruta_salida)
     print(f"PDF profesional guardado exitosamente en: {ruta_salida}")
-

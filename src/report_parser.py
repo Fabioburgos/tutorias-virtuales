@@ -17,23 +17,22 @@ def extraer_calificaciones(informe_texto: str) -> tuple[dict, float]:
     print("--- [Parser] Extrayendo calificaciones de la tabla Markdown ---")
 
     # Expresión regular mejorada para ser más flexible.
-    # Busca: | **C<numero>...** | <puntaje> |
+    # Busca: | **C<numero>... | <puntaje>/10 |
     # Captura el número del criterio y el número del puntaje en la siguiente celda.
-    patron = re.compile(r"\|\s*\*\*C(\d+)\..*?\|\s*(\d+)\s*\|", re.DOTALL)
+    patron_criterios = re.compile(r"\|\s*\*\*C(\d+).*?\|\s*(\d+)\s*/\s*10\s*\|", re.DOTALL)
 
     calificaciones = {}
     puntuaciones = []
 
-    for match in patron.finditer(informe_texto):
+    for match in patron_criterios.finditer(informe_texto):
         criterio_num = int(match.group(1))
-        # El grupo 2 ahora captura directamente el número de la puntuación.
         puntuacion = int(match.group(2))
         
         calificaciones[f"C{criterio_num}"] = puntuacion
         puntuaciones.append(puntuacion)
-
+    
     # También buscamos el promedio final que Gemini calcula
-    promedio_match = re.search(r"\|\s*\*\*PROMEDIO.*?\*\*\|\s*([\d\.]+)", informe_texto)
+    promedio_match = re.search(r"Promedio General\*\*.*?([\d\.]+)\s*/\s*10", informe_texto)
     if promedio_match:
         promedio = float(promedio_match.group(1))
         print(f"Promedio extraído directamente de la respuesta de Gemini: {promedio:.2f}")
