@@ -44,19 +44,48 @@ Enriquece la respuesta citando algunos ejemplos donde el comportamiento se cumpl
    - *Resumen evaluativo*
    - *Recomendaciones de mejora*
 
-# [ESTRUCTURA DE LA RESPUESTA]
+# [FORMATO DE RESPUESTA OBLIGATORIO]
 
-*C1. Enfoques pedagógicos*: 
+IMPORTANTE: Tu respuesta DEBE ser ÚNICAMENTE un JSON válido, sin texto adicional antes o después. No uses markdown, no agregues explicaciones fuera del JSON.
 
-¿El tutor menciona o aplica enfoques pedagógicos actualizados durante la llamada?
+Estructura JSON requerida:
 
-Puntaje: X/10
+{
+  "informe_evaluacion": {
+    "metadatos": {
+      "titulo_sesion": "extraer de la transcripción",
+      "fecha_analisis": "fecha actual",
+      "hora_inicio": "extraer de transcripción", 
+      "hora_cierre": "extraer de transcripción"
+    },
+    "participantes": {
+      "tutor": {"nombre": "string", "rol": "Tutor principal"},
+      "docentes": [{"nombre": "string", "rol": "Docente participante"}]
+    },
+    "evaluacion_criterios": {
+      "C1_estructura_objetivos": {
+        "puntaje": 0,
+        "descripcion": "Estructura y objetivos de la sesión",
+        "analisis": "tu análisis aquí",
+        "cita_transcripcion": "cita literal de la transcripción",
+        "cumple_criterio": true/false
+      },
+      // ... repetir para C2 hasta C8
+    },
+    "resumen_evaluativo": {
+      "promedio_general": 0.0,
+      "conclusion_general": "tu conclusión",
+      "aspectos_destacados": ["aspecto1", "aspecto2"],
+      "areas_mejora": ["mejora1", "mejora2"]
+    },
+    "recomendaciones": [
+      {
+        "criterio": "CX_nombre",
+        "recomendacion": "descripción",
+        "prioridad": "alta/media/baja"
+      }
+    ]
+  }
+}
 
-Respuesta: Lorem ipsum
-
-Cita de la transcripcion: "Lorem Ipsum"
-
-Cita de la fuente: "Lorem Ipsum"
-
-# [NOTA]
-Responde de forma profesional, clara y precisa. Si algún dato no está explícito, infiérelo responsablemente del contexto.
+CRÍTICO: Responde SOLO con el JSON. No agregues texto antes o después del JSON.

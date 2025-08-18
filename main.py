@@ -1,18 +1,19 @@
 # analizar_transcripcion.py
 
+import json
 import os
 # Módulos necesarios para la fase de análisis y reporte
 from src.gcs_manager import listar_archivos_en_carpeta_gcs, descargar_archivo_de_gcs
 from src.doc_reader import leer_texto_de_docx
 from src.gemini_analyzer import analizar_con_rag_y_citas
 from src.report_parser import extraer_calificaciones
-from src.pdf_generator import crear_informe_pdf
+from src.pdf_generator import crear_informe_pdf, crear_informe_pdf_desde_json
 
 if __name__ == "__main__":
     # --- 1. CONFIGURACIÓN ---
     # La configuración ahora apunta a la carpeta en GCS
     GCS_BUCKET_NAME = "ia_tele_educacion"
-    CARPETA_TRANSCRIPCIONES_GCS = "tutorias_virtuales/google_docs/"
+    CARPETA_TRANSCRIPCIONES_GCS = "tutorias_virtuales/docs_drive/"
     
     # Ruta al archivo que contiene el prompt de evaluación
     ruta_prompt = "prompts/generacion_diagnostico.txt"
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     REGION_GCP = "us-east1"
     RAG_CORPUS_PATH = "projects/g-tele-educacion-dev-prj-d18a/locations/us-central1/ragCorpora/6917529027641081856"
     
-        # --- 2. PREPARACIÓN E INICIO DEL PIPELINE DE ANÁLISIS POR LOTES ---
+    # --- 2. PREPARACIÓN E INICIO DEL PIPELINE DE ANÁLISIS POR LOTES ---
     print("\n>>> INICIANDO ANÁLISIS POR LOTES DESDE GCS <<<")
 
     # FASE A: Listar todas las transcripciones en la carpeta de GCS
@@ -90,17 +91,34 @@ if __name__ == "__main__":
                 print(f"FALLO: No se generó el informe para {nombre_archivo}.")
                 continue
 
-            # FASE E: Parsear Calificaciones
-            calificaciones, promedio = extraer_calificaciones(informe_evaluativo_texto)
+            # FASE E: Detectar formato y procesar según corresponda
+            print("Detectando formato de respuesta de Gemini...")
 
-            # FASE F: Generar PDF
-            crear_informe_pdf(
-                titulo=f"Informe de Tutoría: {nombre_base}",
-                informe_texto=informe_evaluativo_texto,
-                calificaciones=calificaciones,
-                promedio=promedio,
-                ruta_salida=ruta_informe_pdf
-            )
+            try:
+                json.loads(informe_evaluativo_texto)
+                es_json = True
+                print("✓ Formato JSON detectado - Usando procesamiento optimizado")
+            except json.JSONDecodeError:
+                es_json = False
+                print("✓ Formato Markdown detectado - Usando procesamiento clásico")
+
+            # FASE E: Generar PDF según el formato detectado
+            if es_json:
+                # Usar la función específica para JSON (más eficiente)
+                crear_informe_pdf_desde_json(
+                    titulo=f"Informe de Tutoría: {nombre_base}",
+                    informe_json=informe_evaluativo_texto,
+                    ruta_salida=ruta_informe_pdf
+                )
+            else:
+                calificaciones, promedio = extraer_calificaciones(informe_evaluativo_texto)
+                crear_informe_pdf(
+                    titulo=f"Informe de Tutoría: {nombre_base}",
+                    informe_texto=informe_evaluativo_texto,
+                    calificaciones=calificaciones,
+                    promedio=promedio,
+                    ruta_salida=ruta_informe_pdf
+                )
             print(f"Informe para {nombre_archivo} generado con éxito.")
         else:
             print(f"El archivo de transcripción {nombre_archivo} está vacío.")

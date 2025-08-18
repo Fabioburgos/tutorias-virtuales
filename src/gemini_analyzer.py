@@ -3,6 +3,7 @@
 from google import genai
 from google.genai import types
 import os
+import json
 
 def analizar_con_rag_y_citas(project_id: str, location: str, rag_corpus_path: str, ruta_prompt: str, transcripcion_texto: str) -> str:    
     """
@@ -52,6 +53,7 @@ def analizar_con_rag_y_citas(project_id: str, location: str, rag_corpus_path: st
     generate_content_config = types.GenerateContentConfig(
         temperature = 0.5,
         top_p = 0.95,
+        response_mime_type = "application/json",
         seed = 0,
         max_output_tokens = 65535,
         safety_settings = [types.SafetySetting(
@@ -82,7 +84,7 @@ def analizar_con_rag_y_citas(project_id: str, location: str, rag_corpus_path: st
         print(f"Error: No se encontró el archivo de prompt en la ruta: {ruta_prompt}")
         return None
     
-    prompt = prompt_template.format(transcripcion_texto=transcripcion_texto)
+    prompt = prompt_template.replace("{transcripcion_texto}", transcripcion_texto)
 
     text1 = types.Part.from_text(text=prompt)
     
@@ -103,23 +105,38 @@ def analizar_con_rag_y_citas(project_id: str, location: str, rag_corpus_path: st
             model = model,
             contents = contents,
             config = generate_content_config,
-            )
+        )
         print("Respuesta recibida de Gemini.")
         print(response.text)
-        # --- LÓGICA PARA EXTRAER CITAS ---
-        informe_texto = response.text
         
+        # Validar que es JSON válido
+        resultado_json = json.loads(response.text)
+        
+        # Si hay citas RAG, agregarlas al JSON
         try:
             citations = response.candidates[0].citation_metadata.citation_sources
-            citas_formateadas = "\n\n--- CITAS DE LA FUENTE ---\n"
+            citas_rag = []
             for citation in citations:
-                citas_formateadas += f"- Segmento {citation.segment_index} (URI: {citation.uri}): Inicia en el índice {citation.start_index}, termina en {citation.end_index}.\n"
+                citas_rag.append({
+                    "segmento_index": citation.segment_index,
+                    "uri": citation.uri,
+                    "inicio_index": citation.start_index,
+                    "fin_index": citation.end_index
+                })
             
-            # Devolvemos el informe Y las citas
-            return informe_texto + citas_formateadas
+            # Agregar las citas al JSON
+            resultado_json["informe_evaluacion"]["citas_fuentes_rag"] = citas_rag
+            
+            # Devolver JSON actualizado
+            return json.dumps(resultado_json, indent=2, ensure_ascii=False)
+            
         except (AttributeError, IndexError):
-            # Si no hay citas, devolvemos solo el texto
-            return informe_texto
+            # Sin citas, devolver JSON original
+            return response.text
+            
+    except json.JSONDecodeError:
+        print("Error: Gemini no retornó JSON válido")
+        return None
     except Exception as e:
         print(f"Ocurrió un error al contactar a la API de Gemini: {e}")
         return None

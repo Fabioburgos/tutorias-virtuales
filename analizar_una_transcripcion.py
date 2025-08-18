@@ -1,5 +1,6 @@
 # analizar_una_transcripcion_gcs.py
 
+import json
 import os
 from google.cloud import storage # Importamos la librería de GCS directamente
 # Módulos necesarios para el pipeline
@@ -7,13 +8,14 @@ from src.gcs_manager import descargar_archivo_de_gcs
 from src.doc_reader import leer_texto_de_docx
 from src.gemini_analyzer import analizar_con_rag_y_citas
 from src.report_parser import extraer_calificaciones
-from src.pdf_generator import crear_informe_pdf
+from src.pdf_generator import crear_informe_pdf, crear_informe_pdf_desde_json
 
 if __name__ == "__main__":
     # --- 1. CONFIGURACIÓN ---
     # Aquí defines la transcripción específica que quieres analizar
     GCS_BUCKET_NAME = "ia_tele_educacion"
-    RUTA_TRANSCRIPCION_EN_GCS = "tutorias_virtuales/google_docs/Tutoría Matemáticas Jaime - 2025_05_20 15_13 CST - Transcript.docx"
+    RUTA_TRANSCRIPCION_EN_GCS = "tutorias_virtuales/docs_drive/TV Jaime López matemática - 2025_07_21 13_28 CST - Transcript.docx"
+    
     
     # Ruta al archivo que contiene el prompt de evaluación
     ruta_prompt = "prompts/generacion_diagnostico.txt"
@@ -87,17 +89,36 @@ if __name__ == "__main__":
         print("FALLO: No se generó el informe de Gemini. Proceso detenido.")
         exit()
 
-    # FASE E: Parsear Calificaciones
-    calificaciones, promedio = extraer_calificaciones(informe_evaluativo_texto)
-
-    # FASE F: Generar PDF
-    crear_informe_pdf(
-        titulo=f"Informe de Tutoría: {nombre_base}",
-        informe_texto=informe_evaluativo_texto,
-        calificaciones=calificaciones,
-        promedio=promedio,
-        ruta_salida=ruta_informe_pdf
-    )
+    # FASE E: Detectar formato y procesar según corresponda
+    print("Detectando formato de respuesta de Gemini...")
+    
+    try:
+        # Intentar parsear como JSON
+        json.loads(informe_evaluativo_texto)
+        es_json = True
+        print("✓ Formato JSON detectado - Usando procesamiento optimizado")
+    except json.JSONDecodeError:
+        es_json = False
+        print("✓ Formato Markdown detectado - Usando procesamiento clásico")
+    
+    # FASE F: Generar PDF según el formato detectado
+    if es_json:
+        # Usar la función específica para JSON (más eficiente)
+        crear_informe_pdf_desde_json(
+            titulo=f"Informe de Tutoría: {nombre_base}",
+            informe_json=informe_evaluativo_texto,
+            ruta_salida=ruta_informe_pdf
+        )
+    else:
+        # Usar la función clásica para Markdown
+        calificaciones, promedio = extraer_calificaciones(informe_evaluativo_texto)
+        crear_informe_pdf(
+            titulo=f"Informe de Tutoría: {nombre_base}",
+            informe_texto=informe_evaluativo_texto,
+            calificaciones=calificaciones,
+            promedio=promedio,
+            ruta_salida=ruta_informe_pdf
+        )
     
     print(f"\n\n>>> ¡ANÁLISIS FINALIZADO CON ÉXITO! <<<")
     print(f"El informe final en PDF ha sido guardado en: {ruta_informe_pdf}")
