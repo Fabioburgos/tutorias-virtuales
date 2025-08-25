@@ -1,0 +1,21 @@
+# Ignorar carpetas y archivos de scripts locales no necesarios en la imagen
+.local_scripts/
+output/
+output_por_docente/
+temp_transcripciones/
+
+# Archivos y carpetas relacionadas con desarrollo y sistema
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+*.vscode/
+
+# Otros archivos que no necesitas en la imagen
+*.xml
+*.csv
+
+# Carpeta y archivos de ambientes virtuales
+.venv/

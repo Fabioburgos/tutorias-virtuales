@@ -1,16 +1,16 @@
-# analizar_transcripcion.py
+# main.py (Solo para procesamiento local)
 
-import json
 import os
-# Módulos necesarios para la fase de análisis y reporte
-from src.gcs_manager import listar_archivos_en_carpeta_gcs, descargar_archivo_de_gcs
+import json
 from src.doc_reader import leer_texto_de_docx
-from src.gemini_analyzer import analizar_con_rag_y_citas
 from src.report_parser import extraer_calificaciones
+from src.gemini_analyzer import analizar_con_rag_y_citas
 from src.pdf_generator import crear_informe_pdf, crear_informe_pdf_desde_json
+from src.gcs_manager import listar_archivos_en_carpeta_gcs, descargar_archivo_de_gcs
 
 if __name__ == "__main__":
     # --- 1. CONFIGURACIÓN ---
+
     # La configuración ahora apunta a la carpeta en GCS
     GCS_BUCKET_NAME = "ia_tele_educacion"
     CARPETA_TRANSCRIPCIONES_GCS = "tutorias_virtuales/docs_drive/"
@@ -80,11 +80,11 @@ if __name__ == "__main__":
         if transcripcion_final:
             # FASE D: Analizar con Gemini
             informe_evaluativo_texto = analizar_con_rag_y_citas(
-                project_id=ID_PROYECTO,
-                location=REGION_GCP,
-                rag_corpus_path=RAG_CORPUS_PATH,
-                ruta_prompt=ruta_prompt,
-                transcripcion_texto=transcripcion_final
+                project_id = ID_PROYECTO,
+                location = REGION_GCP,
+                rag_corpus_path = RAG_CORPUS_PATH,
+                ruta_prompt = ruta_prompt,
+                transcripcion_texto = transcripcion_final
             )
 
             if not informe_evaluativo_texto:
@@ -106,18 +106,18 @@ if __name__ == "__main__":
             if es_json:
                 # Usar la función específica para JSON (más eficiente)
                 crear_informe_pdf_desde_json(
-                    titulo=f"Informe de Tutoría: {nombre_base}",
-                    informe_json=informe_evaluativo_texto,
-                    ruta_salida=ruta_informe_pdf
+                    titulo = f"Informe de Tutoría: {nombre_base}",
+                    informe_json = informe_evaluativo_texto,
+                    ruta_salida = ruta_informe_pdf
                 )
             else:
                 calificaciones, promedio = extraer_calificaciones(informe_evaluativo_texto)
                 crear_informe_pdf(
-                    titulo=f"Informe de Tutoría: {nombre_base}",
-                    informe_texto=informe_evaluativo_texto,
-                    calificaciones=calificaciones,
-                    promedio=promedio,
-                    ruta_salida=ruta_informe_pdf
+                    titulo = f"Informe de Tutoría: {nombre_base}",
+                    informe_texto = informe_evaluativo_texto,
+                    calificaciones = calificaciones,
+                    promedio = promedio,
+                    ruta_salida = ruta_informe_pdf
                 )
             print(f"Informe para {nombre_archivo} generado con éxito.")
         else:
